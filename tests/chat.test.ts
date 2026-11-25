@@ -98,6 +98,25 @@ describe("Chat", () => {
     expect(m.error).toMatch(/didn't fit the cartoon format/);
   });
 
+  it("asks again when Claude answers in plain words, then shows the words as the reply", async () => {
+    const { writeDbForTests, readDb } = await import("@/lib/db");
+    const { addChatMessage, runChatTurn } = await import("@/lib/chat/agent");
+    const db = buildSeed();
+    await writeDbForTests(db);
+    const r = await addChatMessage(db.brands[0]!.id, null, "change the theme of every video", "Om");
+    const calls: string[] = [];
+    await runChatTurn(r.chatId, r.replyId, { complete: async ({ user }) => { calls.push(user); return "I can't change the theme from chat yet."; } });
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toMatch(/plain text/);
+    const m = (await readDb()).chats[0]!.messages.at(-1)!;
+    expect(m).toMatchObject({ status: "done", text: "I can't change the theme from chat yet." });
+
+    const r2 = await addChatMessage(db.brands[0]!.id, r.chatId, "ok, ideas then", "Om");
+    const fixed = fake("Sorry, here it is.", { reply: "Two ideas.", action: null });
+    await runChatTurn(r2.chatId, r2.replyId, fixed);
+    expect((await readDb()).chats[0]!.messages.at(-1)).toMatchObject({ status: "done", text: "Two ideas." });
+  });
+
   it("reports a Claude failure on the message instead of hanging", async () => {
     const { writeDbForTests, readDb } = await import("@/lib/db");
     const { addChatMessage, runChatTurn } = await import("@/lib/chat/agent");

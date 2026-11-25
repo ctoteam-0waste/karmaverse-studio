@@ -309,8 +309,18 @@ async function patchReply(chatId: string, replyId: string, patch: Partial<ChatMe
 async function ask(client: LlmClient, db: Database, brand: Brand, chat: Chat, fix?: string): Promise<ChatAnswer> {
   const user = `${chatContext(db, brand, chat)}${fix ? `\n\nYOUR LAST ANSWER COULD NOT BE USED: ${fix}\nReturn corrected JSON.` : ""}`;
   const text = await client.complete({ system: CHAT_SYSTEM, user, maxTokens: 3000 });
-  return parseJsonResult(text, ChatAnswerSchema);
+  try {
+    return parseJsonResult(text, ChatAnswerSchema);
+  } catch (err) {
+    // Claude sometimes answers in plain words (e.g. for a request no action covers).
+    // Ask once more for JSON; if it still writes prose, show the prose as the reply.
+    if (!/No JSON found/.test((err as Error).message) || !text.trim()) throw err;
+    if (fix !== NO_JSON) return ask(client, db, brand, chat, NO_JSON);
+    return { reply: text.trim().slice(0, 3000), action: null };
+  }
 }
+
+const NO_JSON = "it was plain text. Reply ONLY with the JSON object {\"reply\": ..., \"action\": ... or null}; put any explanation inside \"reply\".";
 
 const running = new Set<string>();
 
