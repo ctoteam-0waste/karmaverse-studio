@@ -14,13 +14,13 @@ const MAIN = [
   ["/studio", "✨", "Create"],
   ["/dashboard", "📈", "Dashboard"],
   ["/analytics", "📊", "Results"],
+  ["/team", "🤝", "Team"],
 ] as const;
 
 const MORE = [
   ["/video", "Video Director"],
   ["/growth", "Growth Booster"],
   ["/inbox", "Comments inbox"],
-  ["/team", "Team engagement"],
   ["/trends", "Trends"],
   ["/tracking", "SEO · LLMO · ASO · Blog"],
   ["/competitors", "Competitors"],
