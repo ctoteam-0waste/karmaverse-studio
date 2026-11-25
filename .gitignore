@@ -22,3 +22,6 @@ data/*.backup-*
 # Everything under data/ is private or generated (database, backups, logs,
 # OAuth client files, videos, music, brand assets). Never commit it.
 data/
+
+__pycache__/
+*.pyc
