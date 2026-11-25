@@ -125,8 +125,7 @@ export function scriptFromPiece(brand: Brand, piece: ContentPiece, maxPoints = 4
     else scenes.push({ kind: "point", text: p, say: speakable(p) });
   }
   if (question) scenes.push({ kind: "question", text: question, say: speakable(question) });
-  const app = brand.name;
-  scenes.push({ kind: "cta", text: `Search ${app} on Google Play!`, say: `Search ${app} on Google Play, and make every sustainable gesture count!` });
+  scenes.push(liveOnScene(brand));
   return scenes;
 }
 
@@ -227,6 +226,16 @@ export function brandAssets(brand: Brand, dataFile: string): { logo: string; mas
   };
 }
 
+/** Where the app is live. Every video ends with this. */
+export const LIVE_ON_BUTTON = "Live on Web · App Store · Google Play";
+export function liveOnScene(brand: Pick<Brand, "name">): { kind: "cta"; text: string; say: string } {
+  return {
+    kind: "cta",
+    text: `We're live on the website, App Store and Google Play!`,
+    say: `${brand.name} is now live on the website, the App Store and Google Play. Make every sustainable gesture count!`,
+  };
+}
+
 export interface BuddyResult {
   file: string;
   durationSec: number;
@@ -267,7 +276,7 @@ export async function renderBuddy(brand: Brand, scenes: ReadonlyArray<RenderScen
     title: scenes[0]?.text ?? "",
     ticker: opts.ticker ?? "",
     scenes,
-    cta: { line1: "Every Sustainable Gesture Counts", button: opts.ctaButton || `Get ${brand.name}: App Store & Google Play`, site: brand.website.replace(/^https?:\/\//, "").replace(/\/$/, "") },
+    cta: { line1: "Every Sustainable Gesture Counts", button: opts.ctaButton || LIVE_ON_BUTTON, site: brand.website.replace(/^https?:\/\//, "").replace(/\/$/, "") },
   };
   const specFile = path.join(work, "spec.json");
   await writeFile(specFile, JSON.stringify(spec), "utf8");

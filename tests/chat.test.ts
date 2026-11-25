@@ -31,7 +31,7 @@ describe("Chat", () => {
     expect(ex.map((s) => s.kind)).toEqual(["hook", "point", "point", "question", "cta"]);
     expect(ex.at(-1)?.text).toBe(CHAT_CTA.text);
     const hack = seriesScenes(brand, "hack", { hook: "Cut your bill in 3 steps", steps: ["Switch off at the plug", "Use the fan, not AC"], payoff: "Lower bill" });
-    expect(hack.at(-1)?.text).toMatch(/App Store or Google Play/);
+    expect(hack.at(-1)?.text).toMatch(/website, App Store and Google Play/);
   });
 
   it("answers with ideas, then posts the latest video for review", async () => {

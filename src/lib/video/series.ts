@@ -9,7 +9,7 @@ import { brandContext } from "../llm/prompts";
 import { READY_TO_POST } from "../services/generation";
 import { logger } from "../logger";
 import { newId } from "../util";
-import { brandAssets, speakable, tidy, type BuddyScene, type BuddyStyle } from "./buddy";
+import { brandAssets, LIVE_ON_BUTTON, liveOnScene, speakable, tidy, type BuddyScene, type BuddyStyle } from "./buddy";
 import { ffmpegBinary } from "./maker";
 
 const log = logger("video-series");
@@ -213,7 +213,7 @@ export function scenesFromScript(brand: Brand, series: Exclude<VideoSeries, "car
     s.steps.forEach((st, i) => out.push(sc("step", st, { say: `Step ${i + 1}. ${st}` })));
     out.push(sc("payoff", s.payoff));
   }
-  out.push({ kind: "cta", text: `Search ${brand.name} on Google Play!`, say: `Search ${brand.name} on Google Play, and make every sustainable gesture count!` });
+  out.push(liveOnScene(brand));
   return out;
 }
 
@@ -258,7 +258,7 @@ export async function renderCartoon(brand: Brand, script: SeriesScript<"cartoon"
     happy_1: script.happy_1?.toUpperCase(),
     happy_2: script.happy_2?.toUpperCase(),
     cta_top: opts.ctaTop || "KarmaVerse download karo!",
-    cta_button: opts.ctaButton || "App Store & Google Play",
+    cta_button: opts.ctaButton || LIVE_ON_BUTTON,
     cta_site: brand.website.replace(/^https?:\/\//, "").replace(/\/$/, ""),
   };
   const specFile = path.join(work, "spec.json");

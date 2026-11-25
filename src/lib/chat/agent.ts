@@ -79,7 +79,7 @@ export const ChatAnswerSchema = z.object({ reply: z.string().min(1), action: Cha
 export type ChatAnswer = z.infer<typeof ChatAnswerSchema>;
 
 /** The closing line of every chat video now that the app is on both stores. */
-export const CHAT_CTA = { say: "Search KarmaVerse on the App Store or Google Play, and make every sustainable gesture count!", text: "Search KarmaVerse on the App Store or Google Play!", button: "Get KarmaVerse: App Store & Google Play" };
+export const CHAT_CTA = { say: "KarmaVerse is now live on the website, the App Store and Google Play. Make every sustainable gesture count!", text: "We're live on the website, App Store and Google Play!", button: "Live on Web · App Store · Google Play" };
 
 /* ------------------------------------------------------------------ */
 /* Prompt                                                              */
@@ -106,7 +106,7 @@ Or no action ("action": null) for questions, or when something is unclear (ask O
 
 VIDEO SCRIPT SHAPES:
 ${KINDS.map((k) => `- ${k}: ${SHAPES[k]}`).join("\n")}
-Every line shown on screen must be under 16 words. Do not add a closing call-to-action line: the app adds "Search KarmaVerse on the App Store or Google Play" at the end.
+Every line shown on screen must be under 16 words. Do not add a closing call-to-action line: the app adds "We're live on the website, App Store and Google Play" at the end.
 
 CARTOON STORIES (pick the one whose scenes fit; write one line per scene in order):
 ${Object.entries(CARTOON_STORIES).map(([k, s]) => `- ${k} (${s.lines} lines, ${s.about}): ${s.scenes.join("; ")}`).join("\n")}
@@ -219,7 +219,7 @@ async function renderChatVideo(db: Database, brand: Brand, kind: ChatVideoKind, 
   const out = { outDir: videosDir(dataFile()), dataFile: dataFile() };
   if (kind === "cartoon") {
     const music = pickMusic(tracks, "kinetic", `playful ${topic}`, history);
-    const r = await exclusiveRender(() => renderCartoon(brand, script as SeriesScript<"cartoon">, { ...out, music, ctaTop: "KarmaVerse download karo!", ctaButton: "App Store & Google Play" }));
+    const r = await exclusiveRender(() => renderCartoon(brand, script as SeriesScript<"cartoon">, { ...out, music, ctaTop: "KarmaVerse download karo!", ctaButton: CHAT_CTA.button }));
     return { file: r.file, durationSec: r.durationSec, character: "earth-buddy", look: { style: "cartoon", theme: "story", layout: "center", music }, credit: tracks.find((t) => t.file === music)?.credit ?? "" };
   }
   const character = pickCharacter(history.map((l) => l.character), wanted && characterById(wanted) ? wanted : null);
