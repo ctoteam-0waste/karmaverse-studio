@@ -267,7 +267,7 @@ export async function renderBuddy(brand: Brand, scenes: ReadonlyArray<RenderScen
     title: scenes[0]?.text ?? "",
     ticker: opts.ticker ?? "",
     scenes,
-    cta: { line1: "Every Sustainable Gesture Counts", button: opts.ctaButton || `Search “${brand.name}” on Google Play`, site: brand.website.replace(/^https?:\/\//, "").replace(/\/$/, "") },
+    cta: { line1: "Every Sustainable Gesture Counts", button: opts.ctaButton || `Get ${brand.name}: App Store & Google Play`, site: brand.website.replace(/^https?:\/\//, "").replace(/\/$/, "") },
   };
   const specFile = path.join(work, "spec.json");
   await writeFile(specFile, JSON.stringify(spec), "utf8");

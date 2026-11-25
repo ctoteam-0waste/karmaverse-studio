@@ -258,7 +258,7 @@ export async function renderCartoon(brand: Brand, script: SeriesScript<"cartoon"
     happy_1: script.happy_1?.toUpperCase(),
     happy_2: script.happy_2?.toUpperCase(),
     cta_top: opts.ctaTop || "KarmaVerse download karo!",
-    cta_button: opts.ctaButton || `Search “${brand.name}”`,
+    cta_button: opts.ctaButton || "App Store & Google Play",
     cta_site: brand.website.replace(/^https?:\/\//, "").replace(/\/$/, ""),
   };
   const specFile = path.join(work, "spec.json");
