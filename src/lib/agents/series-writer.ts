@@ -78,8 +78,8 @@ export async function writeSeriesPost(db: Database, brand: Brand, piece: Content
   const saved = await mutate((d) => {
     const i = d.content.findIndex((c) => c.id === piece.id);
     const cur = d.content[i];
-    if (!cur || cur.status !== "draft" || cur.generatedBy !== "template") return false;
-    const next = applyEdit(cur, { hook: a.hook, caption: a.caption, description: a.description, keywords: a.keywords, hashtags: a.hashtags, cta: a.cta, thumbnailConcept: a.thumbnailConcept }, "post-writer");
+    if (!cur || !["draft", "needs-review"].includes(cur.status) || cur.generatedBy !== "template") return false;
+    const next = applyEdit(cur.mediaUrls.length ? { ...cur, mediaUrls: [], hostedMedia: {}, extraMedia: [] } : cur, { hook: a.hook, caption: a.caption, description: a.description, keywords: a.keywords, hashtags: a.hashtags, cta: a.cta, thumbnailConcept: a.thumbnailConcept }, "post-writer");
     d.content[i] = {
       ...next,
       topic: story ? story.title : next.topic,
@@ -88,7 +88,7 @@ export async function writeSeriesPost(db: Database, brand: Brand, piece: Content
       videoScript: JSON.stringify(stored),
       sourceUrl: story?.url ?? "",
       ...(character ? { character } : {}),
-      history: [...next.history, { at: nowIso(), from: "draft", to: "draft", by: "post-writer", note: `Written by Claude as a ${SERIES_LABEL[series]} video.` }],
+      history: [...next.history, { at: nowIso(), from: next.status, to: next.status, by: "post-writer", note: `Written by Claude as a ${SERIES_LABEL[series]} video.` }],
     };
     if (story) {
       const t = d.trends.find((x) => x.id === story.id);

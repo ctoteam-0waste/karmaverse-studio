@@ -58,7 +58,14 @@ const inWindow = (p: ContentPiece, today: string, days = AHEAD_DAYS) => !p.isSam
 export function writerOn(db: Pick<Database, "settings">): boolean {
   return db.settings.generationMode === "anthropic" && isClaudeConfigured();
 }
-const waitingForWriter = (db: Database, p: ContentPiece) => writerOn(db) && p.generatedBy === "template" && p.status === "draft";
+/** Template posts Claude should rewrite: drafts, and posts waiting for review that nobody has approved yet. */
+export const REWRITABLE = ["draft", "needs-review"];
+const waitingForWriter = (db: Database, p: ContentPiece) => writerOn(db) && p.generatedBy === "template" && REWRITABLE.includes(p.status);
+
+/** Fields for a rewritten post: old media was made from the old text, so it is dropped and made again. */
+export function rewritePatch(cur: ContentPiece): Partial<ContentPiece> {
+  return cur.mediaUrls.length ? { mediaUrls: [], hostedMedia: {}, extraMedia: [] } : {};
+}
 
 /** Template drafts in the coming week that Claude should rewrite, soonest first. */
 export function writeQueue(db: Database, today = todayIst()): ContentPiece[] {
@@ -66,7 +73,7 @@ export function writeQueue(db: Database, today = todayIst()): ContentPiece[] {
   const failed = state().failed;
   const now = Date.now();
   return db.content
-    .filter((p) => p.status === "draft" && p.generatedBy === "template" && inWindow(p, today, WRITE_AHEAD_DAYS) && now - (failed.get(`w:${p.id}`) ?? 0) > RETRY_AFTER_MS)
+    .filter((p) => REWRITABLE.includes(p.status) && p.generatedBy === "template" && inWindow(p, today, WRITE_AHEAD_DAYS) && now - (failed.get(`w:${p.id}`) ?? 0) > RETRY_AFTER_MS)
     // News videos are written the day before at the earliest, so the story is still fresh.
     .filter((p) => !(isVideoPost(p) && p.plannedDate! > addDays(today, 1) && seriesFor(p, newsCandidates(db.trends, p.brandId).length > 0) === "news"))
     .sort((a, b) => `${a.plannedDate} ${a.plannedTime}`.localeCompare(`${b.plannedDate} ${b.plannedTime}`));
@@ -112,9 +119,9 @@ export async function writeNext(db: Database): Promise<string | null> {
   const saved = await mutate((d) => {
     const i = d.content.findIndex((c) => c.id === piece.id);
     const cur = d.content[i];
-    if (!cur || cur.status !== "draft" || cur.generatedBy !== "template") return false;
-    const next = applyEdit(cur, { hook: v.hook, caption: v.caption, description: v.description, keywords: v.keywords, hashtags: v.hashtags, cta: v.cta, thumbnailConcept: v.thumbnailConcept }, "post-writer");
-    d.content[i] = { ...next, generatedBy: "anthropic", history: [...next.history, { at: nowIso(), from: "draft", to: "draft", by: "post-writer", note: "Written by Claude." }] };
+    if (!cur || !REWRITABLE.includes(cur.status) || cur.generatedBy !== "template") return false;
+    const next = applyEdit({ ...cur, ...rewritePatch(cur) }, { hook: v.hook, caption: v.caption, description: v.description, keywords: v.keywords, hashtags: v.hashtags, cta: v.cta, thumbnailConcept: v.thumbnailConcept }, "post-writer");
+    d.content[i] = { ...next, generatedBy: "anthropic", history: [...next.history, { at: nowIso(), from: next.status, to: next.status, by: "post-writer", note: "Written by Claude." }] };
     return true;
   });
   if (!saved) return null;

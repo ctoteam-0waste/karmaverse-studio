@@ -18,12 +18,31 @@ export function brandContext(brand: Brand): string {
     `BRAND HASHTAGS: ${brand.hashtags.join(" ")}`,
     ...teamDirection(brand),
     "",
+    ENGAGEMENT_PLAYBOOK,
+    "",
     "HARD RULES:",
     "- Do not invent statistics, testimonials, product features, partner names or reward amounts. Use [CONFIRM: ...] placeholders instead.",
     "- Do not promise views, followers, virality or guaranteed rewards.",
     "- Adapt each platform version: different length, tone, structure and CTA. Never paste the same text across platforms.",
   ].join("\n");
 }
+
+/**
+ * What makes similar Indian eco creators' posts get likes and comments (from their
+ * top posts in Competitor Watch, Nov 2026). Shared by every writer: posts, video
+ * series scripts and Chat.
+ */
+export const ENGAGEMENT_PLAYBOOK = [
+  "ENGAGEMENT PLAYBOOK (what gets likes and comments for similar Indian eco creators such as Zero Waste Adda, Worm Rani, Nayana Premnath and Scrap Uncle):",
+  "- The hook is the first 2 seconds. Write it like a friend talking, never a label. NEVER start with \"Start here:\", \"How it works:\", \"Update:\", \"Join us:\", \"Try this today:\", \"Quick tip:\" or the topic title.",
+  "- Use one hook pattern: a surprise (\"My compost bin had a SURPRISE for me!\"), a relatable call-out (\"Am I right or am I right? 🤭\", \"Be honest, you also have this in your cupboard\"), a challenge (\"Only 1 in 10 people get this right\"), a tiny story (\"I threw this in the dustbin for 10 years…\"), a local angle (\"Bengaluru, this one's for you\"), or a bold one-liner (\"Sustainability isn't an event.\").",
+  "- Show real Indian life: chai cups, dabbas, hostel and PG rooms, society WhatsApp groups, Diwali cleaning, monsoon, kabadiwala, Mumbai local, mummy's steel containers. Hinglish is welcome where it sounds natural.",
+  "- Keep it light and a little funny; the viewer is the hero. One idea per post.",
+  "- End with ONE question people can answer in a word, number or emoji (\"Wet or dry? Comment 👇\", \"Which one are you: 1, 2 or 3?\") and a save/share nudge aimed at a person (\"Send this to your hostel roommate\").",
+  "- Captions: 1-3 emojis, short lines. Video text: no emojis.",
+  "- KarmaVerse is about sustainable action and climate impact; never frame it as a doorstep pickup or scrap-collection service.",
+  "- No politics, no insults, no swearing, no shaming.",
+].join("\n");
 
 /** The team's standing instructions and goals from the "Tell the team" box (newest last; newer wins on conflict). */
 export function teamDirection(brand: Pick<Brand, "instructions" | "goals">): string[] {
