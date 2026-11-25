@@ -250,6 +250,8 @@ export async function renderBuddy(brand: Brand, scenes: ReadonlyArray<RenderScen
     work,
     out,
     style: look.style,
+    // Bright Instagram-reel look (colour per scene, big captions, punchy cuts) for every video.
+    reel: true,
     theme: look.theme,
     layout: look.layout,
     music: look.music,

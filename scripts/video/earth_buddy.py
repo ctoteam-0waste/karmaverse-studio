@@ -653,6 +653,7 @@ def leaves(frame, theme, parts, tt):
 # ---------------------------------------------------------------- render
 
 def render(spec):
+    global GAP
     ffmpeg = spec["ffmpeg"]
     work = spec["work"]
     os.makedirs(work, exist_ok=True)
@@ -664,6 +665,16 @@ def render(spec):
     series = style in ("news", "quiz", "myth", "hack")
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import series_styles as ss
+    # Reel mode: bright colours, big captions, punchy cuts and a faster voice.
+    reel = bool(spec.get("reel"))
+    if reel:
+        import reel_fx as rf
+        rf.setup(font, FX, FB)
+        GAP = 0.25
+        try:
+            spec["rate"] = f"{int(str(spec.get('rate', '+4%')).strip('%')) + 6:+d}%"
+        except ValueError:
+            spec["rate"] = "+10%"
     clips = []
     for i, sc in enumerate(scenes):
         mp3 = os.path.join(work, f"s{i}.mp3")
@@ -692,6 +703,13 @@ def render(spec):
     bg = ss.news_bg(seed) if style == "news" else background(theme, seed)
     bar = logo_bar(spec)
     bg.paste(bar, (60, 50), bar)
+    reel_bgs = []
+    if reel:
+        for k in range(len(rf.PALETTES)):
+            b = rf.background(k, seed)
+            b.paste(bar, (60, 50), bar)
+            reel_bgs.append(b)
+        stars = rf.make_sparkles(seed)
     # A character drawn with three mouth frames (closed, half, open) swaps frames by loudness;
     # the Earth Buddy photo has one image and its mouth is stretched instead.
     frames = [f for f in spec.get("frames", []) if os.path.exists(f)]
@@ -739,13 +757,15 @@ def render(spec):
         local = tt - starts[si]
         p = max(0.0, min(1.0, local / max(0.1, dur)))
         is_cta = sc.get("kind") == "cta"
+        if reel and style != "news":
+            bg = reel_bgs[(si + seed) % len(reel_bgs)]
 
         frac = ss.words_frac(clips[si][3], local)
         kind = sc.get("kind")
         if series and not is_cta and kind in ss.PANEL_KINDS[style]:
             frame = bg.copy()
             if style != "news":
-                leaves(frame, theme, falling, tt)
+                rf.sparkles(frame, stars, tt) if reel else leaves(frame, theme, falling, tt)
             if style == "news":
                 panel, dx = ss.news_panel(sc, spec, local, dur, frac, si)
                 ss.news_tag(frame, tt)
@@ -782,12 +802,16 @@ def render(spec):
             panel = cache[key]
             frame.paste(panel, ((W - panel.width) // 2, 370), panel)
         elif style == "kinetic" and not is_cta:
-            frame = kin_bgs[si % len(kin_bgs)].copy()
-            frame.paste(bar, (60, 50), bar)
+            if reel:
+                frame = bg.copy()
+                rf.sparkles(frame, stars, tt)
+            else:
+                frame = kin_bgs[si % len(kin_bgs)].copy()
+                frame.paste(bar, (60, 50), bar)
             kinetic_frame(frame, sc, theme, p, si)
         else:
             frame = bg.copy()
-            leaves(frame, theme, falling, tt)
+            rf.sparkles(frame, stars, tt) if reel else leaves(frame, theme, falling, tt)
             panel = None
             # New scenes slide up a little as they arrive.
             rise = int(90 * (1 - ease(local / 0.35)))
@@ -852,6 +876,10 @@ def render(spec):
         if style == "news" and not is_cta:
             ss.caption_bar(frame, sc["text"], spoken)
             ss.ticker(frame, ticker_text, tt)
+        elif reel and (style not in ("kinetic", "chat", "notes") or is_cta):
+            # Big captions instead of the bubble; hidden during a quiz countdown.
+            if not (holds[si] > 0 and local > dur + 0.1):
+                rf.captions(frame, sc["text"], min(1.0, max(0.02, spoken)), max(1110, my - 70))
         elif style not in ("kinetic", "chat", "notes") or is_cta:
             if series or is_cta:
                 b = bubble(sc["text"], min(1.0, max(0.02, spoken)), W - 120, mx + mw // 2 - 60, highlight=True)
@@ -863,7 +891,18 @@ def render(spec):
             else:
                 b = bubble(sc["text"], min(1.0, max(0.02, spoken)), W - 120, mx + mw // 2 - 60, highlight=True)
                 frame.paste(b, (60, max(990, my - b.height + 50)), b)
-        progress(frame, theme, starts, clips, tt)
+        if reel:
+            rf.progress(frame, starts, clips, GAP, tt, rf.accent((si + seed) % len(rf.PALETTES)))
+            if si > 0:
+                frame = rf.punch(frame, local)
+            if 0.6 <= tt < 3.8:
+                rf.sticker(frame, "WATCH TILL THE END", tt - 0.6, W - 250, 236)
+            if is_cta:
+                rf.sticker(frame, "FOLLOW FOR MORE", local - 0.3, W // 2, 236, bg=(255, 46, 136), fg=(255, 255, 255), angle=4, size=50)
+            elif si == len(scenes) - 2 and local > 0.4:
+                rf.sticker(frame, "SAVE THIS", local - 0.4, 200, 236, bg=(0, 214, 143), angle=5)
+        else:
+            progress(frame, theme, starts, clips, tt)
         proc.stdin.write(frame.tobytes())
         if fi % 300 == 0:
             print(f"frame {fi}/{nframes}", flush=True)
