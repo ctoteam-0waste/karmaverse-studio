@@ -1017,6 +1017,16 @@ def render(spec):
     work = spec["work"]
     os.makedirs(work, exist_ok=True)
     lines = spec["lines"]
+    # Reel mode: punchier colours, big word captions, stickers, progress bar, faster voice.
+    reel = bool(spec.get("reel"))
+    if reel:
+        import reel_fx as rf
+        from PIL import ImageEnhance
+        rf.setup(eb.font, eb.FX, eb.FB)
+        try:
+            spec["rate"] = f"{int(str(spec.get('rate', '+8%')).strip('%')) + 6:+d}%"
+        except ValueError:
+            spec["rate"] = "+14%"
     clips = []
     for i, ln in enumerate(lines):
         mp3 = os.path.join(work, f"c{i}.mp3")
@@ -1064,9 +1074,14 @@ def render(spec):
         else:
             SCENES[si](f, lt, D, t, buddy, lv, spec)
         f.alpha_composite(bar, ((W - bar.width) // 2, 40))
-        subtitle(f, lines[si].get("sub", ""), voice_t / 0.4)
+        if reel:
+            f = ImageEnhance.Color(f.convert("RGB")).enhance(1.3).convert("RGBA")
+            if voice_t > 0:
+                rf.captions(f, lines[si].get("sub", ""), voice_t / max(0.1, clips[si][1] * 0.95), 1470)
+        else:
+            subtitle(f, lines[si].get("sub", ""), voice_t / 0.4)
         # quick iris-style transition from black at each scene start
-        if lt < 0.25 and si > 0:
+        if lt < 0.25 and si > 0 and not reel:
             k = lt / 0.25
             m = Image.new("L", (W, H), 0)
             r = int(lerp(0, 1200, eb.ease(k)))
@@ -1075,6 +1090,17 @@ def render(spec):
             f = Image.composite(f, black, m)
         if t > total - 0.4:
             f = Image.blend(Image.new("RGBA", (W, H), (0, 0, 0, 255)), f, clamp((total - t) / 0.4))
+        if reel:
+            f = f.convert("RGB")
+            rf.progress(f, starts, [(None, d) for d in durs], 0.0, t, rf.accent(si))
+            if 0.6 <= t < 3.8:
+                rf.sticker(f, "WATCH TILL THE END", t - 0.6, W - 250, 200)
+            if SCENES[si] is scene_cta:
+                rf.sticker(f, "FOLLOW FOR MORE", lt - 0.3, W // 2, 200, bg=(255, 46, 136), fg=(255, 255, 255), angle=4, size=50)
+            elif si == len(SCENES) - 2 and lt > 0.4:
+                rf.sticker(f, "SAVE THIS", lt - 0.4, 200, 200, bg=(0, 214, 143), angle=5)
+            if si > 0:
+                f = rf.punch(f, lt)
         if preview:
             f.convert("RGB").resize((360, 640)).save(os.path.join(work, f"prev_{fi:04d}.jpg"))
             continue

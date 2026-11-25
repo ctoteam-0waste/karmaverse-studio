@@ -248,6 +248,8 @@ export async function renderCartoon(brand: Brand, script: SeriesScript<"cartoon"
     logo: assets.logo,
     partnerLogo: assets.partnerLogo,
     mascot: assets.mascot,
+    // Bright reel look: punchier colours, big word captions, stickers, progress bar.
+    reel: true,
     story: script.story,
     lines: script.lines,
     title_small: script.title_small,
